@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 using DefaultNamespace;
 using MachineLearning.NeuralNetwork;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
 
 public class PlayerBot : MonoBehaviour
@@ -17,6 +18,8 @@ public class PlayerBot : MonoBehaviour
     private List<Tile> _path;
     private Data _data;
     private int _amountOfData = 5000;
+    private int _learnAmount = 500;
+    private Tile _prevTile;
 
     private void Start()
     {
@@ -25,28 +28,117 @@ public class PlayerBot : MonoBehaviour
         CurrentTile = LevelDrawer.Instance.Tiles[Random.Range(0, 10), Random.Range(0, 10)];
 //		DisplayWeigths();
 //		var xor = new Xor();
-        _path = new AStar().FindPath(CurrentTile, LevelDrawer.Instance.FinishTile);
+//        _path = new AStar().FindPath(CurrentTile, LevelDrawer.Instance.FinishTile);
 //        StartCoroutine(Move(Astar));
-        _data = GetData();
-        var dataSize = 30000;
-        _neuralNetwork = new NeuralNetwork(new[] {101, 40, 4});
-        _neuralNetwork.Learn(_data.Input.Take(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray(), _data.Output.Take(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray(), 1.3f);
-        var accu = _neuralNetwork.Test(_data.Input.Skip(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray(),
-            _data.Output.Skip(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray());
-        Debug.Log(accu);
+//        _data = GetData();
+//        var dataSize = 30000;
+//        _neuralNetwork = new NeuralNetwork(new[] {101, 40, 4});
+//        _neuralNetwork.Learn(_data.Input.Take(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray(), _data.Output.Take(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray(), 1.3f);
+//        var accu = _neuralNetwork.Test(_data.Input.Skip(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray(),
+//            _data.Output.Skip(dataSize).Select(x => x.Select(y => (float) y).ToArray()).ToArray());
+//        Debug.Log(accu);
 //        _neuralNetwork.PrintWeigths();
-        StartCoroutine(Move(NeuralMovement));
+//        StartCoroutine(Move(NeuralMovement));
+
+        _neuralNetwork = new NeuralNetwork(new[] {7, 5, 4});
+        StartCoroutine(Move(LearnRealTime));
     }
 
     public void Move(Tile tile)
     {
+        if (tile == null)
+            return;
+
         var newPosition = tile.transform.position;
         newPosition.z -= 1;
-        GenerateData(tile);
+//        GenerateData(tile);
         transform.position = newPosition;
         CurrentTile.Active = false;
+        _prevTile = CurrentTile;
         CurrentTile = tile;
         CurrentTile.Active = true;
+    }
+
+    private void LearnRealTime()
+    {
+        var tiles = CurrentTile.GetTileMapping();
+        var finish = LevelDrawer.Instance.FinishTile;
+        var x = CurrentTile.X - finish.X;
+        var y = CurrentTile.Y - finish.Y;
+        var input = new float[6];
+        input[0] = x;
+        input[1] = y;
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            input[i + 2] = tiles[i];
+        }
+
+        var output = GetBestTile(input);
+
+        if (output == null)
+            LevelDrawer.Instance.RecreateRandomMap();
+
+        _neuralNetwork.Learn(new float[][] {input}, new float[][] {output}, 0.3f);
+
+        if (_learnAmount > 0)
+        {
+            Move(GetNextTile(output));
+        }
+        else
+        {
+            Debug.Log("Machine learning does this move!");
+            var next = _neuralNetwork.Calculate(input);
+            Move(GetNextTile(next));
+        }
+    }
+
+    private float[] GetBestTile(float[] input)
+    {
+//        Tile bestNeighbour;
+//        var bestNeighbourX = 0;
+//        var bestNeighbourY = 0;
+//        
+//        for (int i = 2; i < input.Length - 2; i++)
+//        {
+//            if(input[i] == 0)
+//                continue;
+//
+//            var neighbour = CurrentTile.NeighbourByIndex(i - 2);
+//            var x = neighbour.X - LevelDrawer.Instance.FinishTile.X;
+//        }
+        var x = input[0];
+        var y = input[1];
+        var output = new float[4];
+        //Try to get the best tile
+        if (x > 0 && input[5] != 0)
+            output = new float[] {0, 0, 0, 1};
+        if (x < 0 && input[3] != 0)
+            output = new float[] {0, 1, 0, 0};
+        if (y > 0 && input[4] != 0)
+            output = new float[] {0, 0, 1, 0};
+        if (y < 0 && input[2] != 0)
+            output = new float[] {1, 0, 0, 0};
+
+        var tile = GetNextTile(output);
+
+        //If we can't find a better Tile, get a random tile
+        if (tile != null && tile != _prevTile)
+            return output;
+        
+        return GetRandomTile(input);
+    }
+
+    private float[] GetRandomTile(float[] input)
+    {
+        var output = new float[4];
+        var random = Random.Range(2, 6);
+        if (input[random] != 0)
+        {
+            output[random - 2] = 1;
+            return output;
+        }
+
+        return GetRandomTile(input);
     }
 
     private void RandomMovement()
@@ -73,7 +165,6 @@ public class PlayerBot : MonoBehaviour
 
     private void NeuralMovement()
     {
-
         var input = SerializeMap();
         var movement = _neuralNetwork.Calculate(input.Select(x => (float) x).ToArray());
         var output = string.Empty;
@@ -81,11 +172,11 @@ public class PlayerBot : MonoBehaviour
         {
             output += move + " ";
         }
+
         Debug.Log(output);
         var bestValue = movement.Max();
         var bestIndex = Array.IndexOf(movement, bestValue);
 
-//		Debug.Log(bestIndex + " " + bestValue);
 
         Tile newTile = null;
 
@@ -100,11 +191,30 @@ public class PlayerBot : MonoBehaviour
 
         if (newTile == null || newTile.Type == TileType.Rock)
         {
-            //DIE WHEN LEARNING
             return;
         }
 
         Move(newTile);
+    }
+
+    private Tile GetNextTile(float[] output)
+    {
+        var bestValue = output.Max();
+        var bestIndex = Array.IndexOf(output, bestValue);
+
+
+        Tile newTile = null;
+
+        if (bestIndex == 0)
+            newTile = CurrentTile.Up;
+        if (bestIndex == 1)
+            newTile = CurrentTile.Right;
+        if (bestIndex == 2)
+            newTile = CurrentTile.Down;
+        if (bestIndex == 3)
+            newTile = CurrentTile.Left;
+
+        return newTile;
     }
 
     private void Astar()
@@ -112,7 +222,7 @@ public class PlayerBot : MonoBehaviour
         if (_path == null || !_path.Any())
         {
             Debug.Log("Not path to find");
-            
+
             return;
         }
 
@@ -120,40 +230,33 @@ public class PlayerBot : MonoBehaviour
         _path.RemoveAt(_path.Count - 1);
     }
 
-//	private void DisplayWeigths()
-//	{
-//		for (int i = 0; i < _neuralNetwork.Weigths.Length; i++)
-//		{
-//			for (int j = 0; j < _neuralNetwork.Weigths[i].Length; j++)
-//			{
-//				var row = string.Empty;
-//				for (int k = 0; k < _neuralNetwork.Weigths[i][j].Length; k++)
-//				{
-//					row += " " + _neuralNetwork.Weigths[i][j][k];
-//				}
-//				Debug.Log(row);
-//			}
-//		}
-//	}
-
     private IEnumerator Move(Action moveMethod)
     {
         while (true)
         {
-			yield return new WaitForSeconds(0.5f);
-//            yield return new WaitForEndOfFrame();
+            if (_learnAmount <= 0)
+                yield return new WaitForSeconds(0.5f);
+            else
+            {
+                yield return new WaitForEndOfFrame();
+            }
+
 //            yield return null;
             if (CurrentTile.Type == TileType.Finish)
             {
                 LevelDrawer.Instance.RecreateRandomMap();
-                _path = new AStar().FindPath(LevelDrawer.Instance.Tiles[Random.Range(0, 10), Random.Range(0, 10)], LevelDrawer.Instance.FinishTile);
-                _amountOfData--;
-
-                if (_amountOfData <= 0) {
-                    DumpData();
-                    Debug.Log("Done dumping");
-                    yield break;
-                    }
+                _path = new AStar().FindPath(LevelDrawer.Instance.Tiles[Random.Range(0, 10), Random.Range(0, 10)],
+                    LevelDrawer.Instance.FinishTile);
+                if(_path == null)
+                    LevelDrawer.Instance.RecreateRandomMap();
+//                _amountOfData--;
+                _learnAmount--;
+//
+//                if (_amountOfData <= 0) {
+//                    DumpData();
+//                    Debug.Log("Done dumping");
+//                    yield break;
+//                    }
 
                 Debug.Log("finished");
             }
@@ -195,6 +298,7 @@ public class PlayerBot : MonoBehaviour
 
         return output;
     }
+
 
     private void GenerateData(Tile newTile)
     {

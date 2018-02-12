@@ -35,11 +35,6 @@ public class LevelDrawer : MonoBehaviour
 		CreateMap();
 		CenterCamera();
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 
 	public void RecreateRandomMap()
 	{
@@ -64,12 +59,12 @@ public class LevelDrawer : MonoBehaviour
 				tile.Y = i;
 				Tiles[j, i] = tile;
 
-//				if (Random.Range(0, 100) < 20)
-//				{
-//					tile.GetComponent<SpriteRenderer>().sprite = _sprites["rock"];
-//					tile.Type = TileType.Rock;
-//					continue;
-//				}
+				if (Random.Range(0, 100) < 20)
+				{
+					tile.GetComponent<SpriteRenderer>().sprite = _sprites["rock"];
+					tile.Type = TileType.Rock;
+					continue;
+				}
 //
 //				if (Random.Range(0, 100) < 20)
 //				{

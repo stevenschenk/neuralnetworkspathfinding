@@ -38,6 +38,20 @@ public class Tile : MonoBehaviour
 		get { return getTile(X + 1, Y); }
 	}
 
+	public Tile NeighbourByIndex(int i)
+	{
+		if (i == 0)
+			return Up;
+		if (i == 1)
+			return Right;
+		if (i == 2)
+			return Down;
+		if (i == 3)
+			return Left;
+
+		return null;
+	}
+
 	public float[] GetTileMapping()
 	{
 		var mapping = new float[4];
@@ -54,13 +68,13 @@ public class Tile : MonoBehaviour
 	{
 		var neighbours = new List<Tile>();
 		
-		if(Left != null)
+		if(Left != null && Left.Type == TileType.Snow)
 			neighbours.Add(Left);
-		if(Up != null)
+		if(Up != null && Up.Type == TileType.Snow)
 			neighbours.Add(Up);
-		if(Right != null)
+		if(Right != null && Right.Type == TileType.Snow)
 			neighbours.Add(Right);
-		if(Down != null)
+		if(Down != null && Down.Type == TileType.Snow)
 			neighbours.Add(Down);
 
 		return neighbours;
