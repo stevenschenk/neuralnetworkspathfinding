@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MachineLearning.NeuralNetwork
 {
+    [Serializable]
     public class Layer
     {
         public List<Neuron> Neurons;

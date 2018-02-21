@@ -57,12 +57,14 @@ public class LevelDrawer : MonoBehaviour
 				tile.Type = TileType.Snow;
 				tile.X = j;
 				tile.Y = i;
+				tile.Counter = 0;
 				Tiles[j, i] = tile;
 
 				if (Random.Range(0, 100) < 20)
 				{
 					tile.GetComponent<SpriteRenderer>().sprite = _sprites["rock"];
 					tile.Type = TileType.Rock;
+					tile.Counter = -1;
 					continue;
 				}
 //
@@ -80,6 +82,7 @@ public class LevelDrawer : MonoBehaviour
 		var randomY = Random.Range(0, GridSizeY);
 		var finish = Tiles[randomX, randomY];
 		finish.Type = TileType.Finish;
+		finish.Counter = 0;
 		finish.GetComponent<SpriteRenderer>().sprite = _sprites["iglo"];
 		FinishTile = finish;
 	}

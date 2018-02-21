@@ -141,6 +141,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GridSizeX: 10
   GridSizeY: 10
+  FinishTile: {fileID: 0}
   _spriteTextures:
   - {fileID: 21300000, guid: 615673e61059b0245bb81af9449753e0, type: 3}
   - {fileID: 21300000, guid: b5279abf7e63dcd438fba62cb8d2fbd1, type: 3}
@@ -231,6 +232,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccfb4564c6fbf2f4eb4d5751cd2123f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CurrentTile: {fileID: 0}
 --- !u!212 &686088536
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -443,7 +445,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!61 &2075430113
 BoxCollider2D:
   m_ObjectHideFlags: 0

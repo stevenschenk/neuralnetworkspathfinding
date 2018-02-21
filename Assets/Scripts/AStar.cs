@@ -26,7 +26,7 @@ namespace DefaultNamespace
             while (_openSet.Any())
             {
                 var current = _openSet.OrderBy(x => _fScores[x]).First();
-
+                
                 if (current == _end)
                 {
                     return ReconstructPath(_cameFrom, current);
@@ -36,10 +36,10 @@ namespace DefaultNamespace
                 _closedSet.Add(current);
 
                 var neighbours = current.GetNeighbours();
-
+                
                 foreach (var neighbour in neighbours)
                 {
-                    if(_closedSet.Contains(neighbour))
+                    if (_closedSet.Contains(neighbour))
                         continue;
 
                     _openSet.Add(neighbour);
@@ -61,11 +61,10 @@ namespace DefaultNamespace
                         _gScores[neighbour] = gScore;
                         _fScores[neighbour] = gScore + ManhattanDistance(neighbour, _end);
                     }
-
                 }
-
             }
 
+            Debug.Log("Can not find a path");
             return null;
         }
 
@@ -107,6 +106,5 @@ namespace DefaultNamespace
 
             return totalPath;
         }
-        
     }
 }

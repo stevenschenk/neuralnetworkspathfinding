@@ -5,6 +5,7 @@ using UnityEngine;
 public enum TileType
 {
 	Snow,
+	Visited,
 	Water,
 	Rock,
 	Finish
@@ -17,6 +18,7 @@ public class Tile : MonoBehaviour
 	public int X;
 	public int Y;
 	public bool Active;
+	public int Counter = 0;
 
 	public Tile Left
 	{
@@ -68,13 +70,13 @@ public class Tile : MonoBehaviour
 	{
 		var neighbours = new List<Tile>();
 		
-		if(Left != null && Left.Type == TileType.Snow)
+		if(Left != null && (Left.Type == TileType.Snow || Left.Type == TileType.Finish || Left.Type == TileType.Visited))
 			neighbours.Add(Left);
-		if(Up != null && Up.Type == TileType.Snow)
+		if(Up != null && (Up.Type == TileType.Snow || Up.Type == TileType.Finish || Up.Type == TileType.Visited))
 			neighbours.Add(Up);
-		if(Right != null && Right.Type == TileType.Snow)
+		if(Right != null && (Right.Type == TileType.Snow || Right.Type == TileType.Finish || Right.Type == TileType.Visited))
 			neighbours.Add(Right);
-		if(Down != null && Down.Type == TileType.Snow)
+		if(Down != null && (Down.Type == TileType.Snow || Down.Type == TileType.Finish || Down.Type == TileType.Visited))
 			neighbours.Add(Down);
 
 		return neighbours;
